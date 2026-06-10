@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="robots" content="noindex,nofollow" />
+<link rel="icon" type="image/png" href="icon.png" />
+<link rel="apple-touch-icon" href="icon.png" />
+<title>FivePrayer · Org Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<style>
+  :root{
+    --bg:#f6f7f9; --card:#ffffff; --line:#e7e9ee; --line2:#eef0f3;
+    --ink:#1a1d23; --mut:#6b7480; --faint:#9aa3af;
+    --teal:#0f9488; --teal2:#14b8a6; --tealsoft:#eafaf7;
+    --green:#0ea371; --red:#e5484d; --amber:#d99a0b; --slate:#64748b; --blue:#5b8def;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:14.5px/1.55 -apple-system,BlinkMacSystemFont,"SF Pro Text","Inter","Segoe UI",Roboto,Helvetica,sans-serif}
+  .wrap{max-width:1180px;margin:0 auto;padding:28px 24px 96px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px}
+  .pad{padding:20px}
+  /* header */
+  header.top{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;margin-bottom:22px}
+  .brand{display:flex;align-items:center;gap:13px}
+  .logo{width:42px;height:42px;border-radius:11px;box-shadow:0 1px 3px rgba(15,148,136,.25)}
+  h1{font-size:18px;margin:0;font-weight:640;letter-spacing:-.015em}
+  .sub{color:var(--mut);font-size:12.5px;margin-top:2px}
+  .live{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--mut);padding:6px 12px;border-radius:999px;background:#fff;border:1px solid var(--line)}
+  .live .dot{width:7px;height:7px;border-radius:50%;background:var(--teal2)}
+  /* tabs */
+  .tabs{display:flex;gap:4px;margin-bottom:22px;border-bottom:1px solid var(--line);overflow-x:auto}
+  .tabs button{flex:0 0 auto;border:0;background:transparent;color:var(--mut);font:inherit;font-size:14px;font-weight:550;
+    padding:10px 14px;cursor:pointer;display:flex;align-items:center;gap:8px;white-space:nowrap;
+    border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .15s}
+  .tabs button:hover{color:var(--ink)}
+  .tabs button.active{color:var(--teal);border-bottom-color:var(--teal)}
+  .tabs button svg{opacity:.85}
+  .tabpanel{display:none}.tabpanel.active{display:block}
+  /* north-star */
+  .ns{display:flex;align-items:center;gap:0;flex-wrap:wrap;padding:13px 18px;margin-bottom:16px}
+  .ns .step{display:flex;align-items:center;font-size:12.5px;color:var(--mut)}
+  .ns .dot{width:8px;height:8px;border-radius:50%;background:#d3d8e0;margin-right:7px}
+  .ns .step.now{color:var(--ink);font-weight:600}.ns .step.now .dot{background:var(--teal)}
+  .ns .step.near{color:var(--ink)}.ns .step.near .dot{background:var(--teal2)}
+  .ns .arrow{margin:0 11px;color:#c4cad3}
+  /* banner */
+  .banner{display:flex;gap:11px;padding:15px 18px;margin-bottom:18px;font-size:13.5px;line-height:1.6;
+    background:var(--tealsoft);border:1px solid #cdeee7;border-radius:14px}
+  .banner svg{color:var(--teal);margin-top:2px;flex:0 0 auto}.banner b{font-weight:620}
+  /* kpis */
+  .grid{display:grid;gap:14px}.kpis{grid-template-columns:repeat(6,1fr)}
+  @media(max-width:1000px){.kpis{grid-template-columns:repeat(3,1fr)}}@media(max-width:560px){.kpis{grid-template-columns:repeat(2,1fr)}}
+  .kpi{padding:16px}
+  .kpi .label{color:var(--mut);font-size:11.5px;font-weight:560;letter-spacing:.02em}
+  .kpi .val{font-size:25px;font-weight:660;margin-top:8px;letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1}
+  .kpi .delta{font-size:12px;margin-top:7px;color:var(--faint)}.kpi .delta.up{color:var(--green)}.kpi .delta.down{color:var(--red)}
+  /* layout */
+  .cols{display:grid;grid-template-columns:1.5fr 1fr;gap:14px;margin-top:14px}@media(max-width:880px){.cols{grid-template-columns:1fr}}
+  .cols.even{grid-template-columns:1fr 1fr}@media(max-width:880px){.cols.even{grid-template-columns:1fr}}
+  h2{font-size:14.5px;margin:0 0 4px;display:flex;align-items:center;gap:9px;flex-wrap:wrap;font-weight:620;letter-spacing:-.01em}
+  h2 .tag{font-size:11px;color:var(--mut);font-weight:500;border:1px solid var(--line);border-radius:6px;padding:2px 7px;background:#fbfcfd}
+  .chart{width:100%;height:300px}.chart.tall{height:340px}.chart.sm{height:230px}
+  .stage{display:flex;align-items:center;gap:12px;margin:11px 0}
+  .stage .nm{width:150px;font-size:13px;color:var(--mut)}
+  .stage .track{flex:1;background:#f0f2f5;border-radius:7px;height:22px;overflow:hidden}
+  .stage .fill{height:100%;border-radius:7px;background:var(--teal2)}
+  .stage .vv{width:128px;text-align:right;font-size:12.5px;color:var(--ink);font-variant-numeric:tabular-nums}
+  .note{font-size:12px;color:var(--mut);margin-top:10px;line-height:1.6}
+  ul.pri{margin:0;padding-left:0;list-style:none}ul.pri li{margin:11px 0;font-size:13.5px;display:flex;gap:10px;align-items:flex-start}
+  .chip{flex:0 0 auto;font-size:10.5px;font-weight:660;border-radius:6px;padding:2px 7px;margin-top:1px}
+  .c-p0{background:#fdecec;color:#c2333a}.c-p1{background:#fdf4e3;color:#a9780c}
+  code{background:#f0f2f5;padding:1px 6px;border-radius:5px;font-size:12px;color:#43506a}
+  .pending{position:relative}.pending .ov{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:8px;background:rgba(255,255,255,.82);border-radius:12px;padding:16px}
+  .pending .ov svg{color:var(--teal)}.pending .ov .t{font-weight:620}.pending .ov .s{font-size:12px;color:var(--mut);max-width:380px;line-height:1.55}
+  .rating-hero{display:flex;align-items:baseline;gap:12px;margin:2px 0 12px;flex-wrap:wrap}
+  .rating-hero .big{font-size:40px;font-weight:680;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+  .rating-hero .stars{color:var(--amber);font-size:16px;letter-spacing:2px}
+  .rating-hero .meta{color:var(--mut);font-size:12.5px}
+  .rev-list{display:flex;flex-direction:column;gap:8px;max-height:300px;overflow-y:auto}
+  .rev{padding:10px 12px;background:#fbfcfd;border:1px solid var(--line2);border-radius:10px}
+  .rev .top{display:flex;justify-content:space-between;gap:8px;font-size:11.5px;color:var(--mut);margin-bottom:3px}
+  .rev .top .stars{color:var(--amber)}
+  .rev .txt{font-size:13px;line-height:1.45;color:#2a2f37}
+  footer{margin-top:30px;color:var(--faint);font-size:11.5px;line-height:1.6;padding:0 4px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><img class="logo" src="icon.png" alt="FivePrayer" />
+      <div><h1>FivePrayer · Org Dashboard</h1><div class="sub" id="sub">Loading…</div></div>
+    </div>
+    <div class="live"><span class="dot"></span><span id="updated">—</span></div>
+  </header>
+
+  <nav class="tabs" id="tabs">
+    <button data-tab="overview" class="active"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20h14V9.5"/></svg>Overview</button>
+    <button data-tab="growth"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l5-5 4 4 8-9"/><path d="M21 7v5h-5"/></svg>Growth</button>
+    <button data-tab="product"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16"/><path d="M6 20v-6"/><path d="M12 20V6"/><path d="M18 20v-9"/></svg>Product</button>
+    <button data-tab="stores"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.6 6.8 19.2l1-5.8L3.5 9.2l5.9-.9z"/></svg>Stores</button>
+    <button data-tab="marketing"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10v4h3l6 4V6L7 10H4z"/><path d="M16 9a3.5 3.5 0 0 1 0 6"/></svg>Marketing</button>
+    <button data-tab="engineering"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="m7 9 3 3-3 3"/><path d="M13 15h4"/></svg>Engineering</button>
+  </nav>
+
+  <!-- OVERVIEW -->
+  <section class="tabpanel active" id="overview">
+    <div class="ns card">
+      <div class="step now"><span class="dot"></span>1.88M today</div>
+      <span class="arrow">→</span><div class="step"><span class="dot"></span>10M</div>
+      <span class="arrow">→</span><div class="step"><span class="dot"></span>50M</div>
+      <span class="arrow">→</span><div class="step near"><span class="dot"></span>160M · pass Muslim Pro</div>
+      <span class="arrow">→</span><div class="step"><span class="dot"></span>1 billion</div>
+    </div>
+    <div class="banner">
+      <svg class="ic" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 21h4"/><path d="M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.5 1 2.5h6c0-1 .3-1.8 1-2.5A6 6 0 0 0 12 3z"/></svg>
+      <div><b>"1.88M users" = app opens, not accounts.</b> ~52% are anonymous. Users who actually sign up activate healthily:
+      Apple <b style="color:var(--teal)">85.4%</b> · Google <b style="color:var(--teal)">62.0%</b> · anonymous <b style="color:var(--amber)">35.3%</b>.
+      The real leak is app-openers who never commit. <b>Lever:</b> convert open→signup, and lift Google to Apple's level.</div>
+    </div>
+    <div class="grid kpis" id="kpis"></div>
+    <div class="card pad" style="margin-top:14px"><h2>Daily Active Users <span class="tag">distinct users with a prayer log / day</span></h2><div class="chart tall" id="c-dau"></div></div>
+    <div class="cols even">
+      <div class="card pad"><h2>Daily Check-ins <span class="tag">prayers logged / day</span></h2><div class="chart" id="c-checkins"></div></div>
+      <div class="card pad"><h2>Prayer Outcomes <span class="tag">last 30 days · 17.2M logs</span></h2><div class="chart" id="c-outcomes"></div></div>
+    </div>
+  </section>
+
+  <!-- GROWTH -->
+  <section class="tabpanel" id="growth">
+    <div class="card pad"><h2>Daily Sign-ups by Provider <span class="tag">users.created_at × auth provider</span></h2><div class="chart tall" id="c-signups"></div>
+      <div class="note">A handful/day in February → <b>peak ~165K/day around May 8–9</b> → a steady ~22K/day now. Anonymous tracks Google; Apple is smaller but activates best.</div></div>
+    <div class="cols even">
+      <div class="card pad"><h2>DAU — spike &amp; retention <span class="tag">prayer_logs</span></h2><div class="chart" id="c-dau2"></div>
+        <div class="note">Peaked at <b>216K (May 26)</b>, then settled at a <b>sustained ~137K</b>. That flat line is the real asset — the bucket holds.</div></div>
+      <div class="card pad"><h2>Activation by Signup Cohort <span class="tag">% who ever prayed</span></h2><div class="chart" id="c-cohort"></div>
+        <div class="note">Organic ~58–61%; viral May diluted to 52.5%; June not fully aged.</div></div>
+    </div>
+    <div class="cols even">
+      <div class="card pad"><h2>Retention by Cohort <span class="tag">D1 / D7 / D30 · % who prayed</span></h2><div class="chart" id="c-retention"></div>
+        <div class="note">Softening as we scale: D1 36.5%→26.3%, D7 18.5%→11.2%; mature D30 floor ~7–10%. ~1.8M weekly signups ≈ only ~150–190K still praying at D30 — the leaky bucket, not acquisition, is the gate to 1B.</div></div>
+      <div class="card pad"><h2>Stickiness <span class="tag">DAU / MAU</span></h2><div class="chart" id="c-stickiness"></div>
+        <div class="note">Now <b>0.17</b> (137K / 794K) — below the 0.20 "daily-habit" bar, down from 0.45 at the May peak.</div></div>
+    </div>
+    <div class="card pad" style="margin-top:14px"><h2>Audience by Country <span class="tag">geocoded · localization &amp; ASO priority</span></h2><div class="chart sm" id="c-geo"></div>
+      <div class="note"><b>Arabic-first is the lever:</b> 9 of the top 12 are Arabic-speaking (Saudi 23%, Egypt 11%, Algeria, Iraq, Libya). Indonesia (#6) is the clear #2. Note: <code>users.language</code> is a hardcoded "en", so geography must drive localization.</div></div>
+  </section>
+
+  <!-- PRODUCT -->
+  <section class="tabpanel" id="product">
+    <div class="cols even">
+      <div class="card pad"><h2>Activation by Login Type <span class="tag">the biggest insight</span></h2><div class="chart sm" id="c-acttype"></div>
+        <div class="note">Signed-up users activate well (Apple 85%, Google 62%); anonymous only 35%. Google&lt;Apple ≈ Android&lt;iOS → likely the Android permission gauntlet.</div></div>
+      <div class="card pad"><h2>Leaky Bucket — Activation <span class="tag">prayer_logs</span></h2><div class="chart sm" id="c-leak"></div>
+        <div class="note">971,906 of 1,877,120 ever prayed (51.8%). The leak concentrates in anonymous app-openers. Target 52% → 75%.</div></div>
+    </div>
+    <div class="cols even">
+      <div class="card pad"><h2>Prayer Outcomes <span class="tag">on-time vs late vs missed</span></h2><div class="chart sm" id="c-outcomes2"></div>
+        <div class="note">76.8% on-time, 20.8% late, only 2.2% missed — the core loop genuinely changes behavior.</div></div>
+      <div class="card pad"><h2>Play Reviews <span class="tag">Google Play · ~94K · 0 replied</span></h2><div class="chart sm" id="c-reviews"></div>
+        <div class="note"><b style="color:var(--red)">0 of ~94K replied.</b> The biggest cheap reputation win — see the Stores tab.</div></div>
+    </div>
+    <div class="cols even">
+      <div class="card pad"><h2>Per-Prayer Quality <span class="tag">on-time % · last 30 days</span></h2><div class="chart sm" id="c-prayer"></div>
+        <div class="note"><b>Fajr is weakest</b> (71.6% on-time, 3.5% missed); quality climbs through the day to Maghrib (82.6%). Fixing the pre-dawn Fajr flow is the clearest retention win.</div></div>
+      <div class="card pad"><h2>Habit Strength <span class="tag">current streak distribution</span></h2><div class="chart sm" id="c-streaks"></div>
+        <div class="note">55% sit at 0; only <b>19.6%</b> hold a 7+ day streak, 7.4% reach 30+. Streak re-ignition (grace periods, nudges) is the highest-leverage retention lever.</div></div>
+    </div>
+  </section>
+
+  <!-- STORES -->
+  <section class="tabpanel" id="stores">
+    <div class="cols even">
+      <div class="card pad"><h2>App Store <span class="tag">iOS · live via API</span></h2>
+        <div id="ios-hero" class="rating-hero"></div><div class="chart sm" id="c-iosdist"></div>
+        <div class="note">Rating from the latest reviews via the App Store Connect API. Most 5★ come from SA / MA / EG.</div></div>
+      <div class="card pad"><h2>Google Play <span class="tag">Android · live via API</span></h2>
+        <div id="play-hero" class="rating-hero"></div><div class="chart sm" id="c-playdist"></div>
+        <div class="note">All-time ~94K reviews (4.82★); last-7-day distribution is live from the Play Developer API. Installs via the Reporting API are being wired.</div></div>
+    </div>
+    <div class="cols even">
+      <div class="card pad"><h2>Recent App Store Reviews <span class="tag">live</span></h2><div id="ios-reviews" class="rev-list"></div></div>
+      <div class="card pad"><h2>Recent Play Reviews <span class="tag">live</span></h2><div id="play-reviews" class="rev-list"></div></div>
+    </div>
+  </section>
+
+  <!-- MARKETING -->
+  <section class="tabpanel" id="marketing">
+    <div class="cols even">
+      <div class="card pad"><h2>Influencer Funnel <span class="tag">snapshot · 812 creators</span></h2><div class="chart sm" id="c-funnel"></div>
+        <div class="note">63 EU/UK emails quarantined (GDPR). The pool of 241 lasts ~2.4 days at 100/day → needs DiscoveryAgent.</div></div>
+      <div class="card pad"><h2>Reach-out Status <span class="tag">real · from the Sheet</span></h2><div class="chart sm" id="c-reach"></div>
+        <div class="note">Reply rate <b>5.7%</b> (44/774). Lever: personalize with the 83 AI angles, automate follow-ups.</div></div>
+    </div>
+    <div class="card pad" style="margin-top:14px"><h2>Reach-out Heatmap <span class="tag">team edit-activity · Sheet version history + live</span></h2>
+      <div class="chart sm" id="c-reachhm"></div>
+      <div class="note">Real history reconstructed from the Sheet's version history (Mar 15 → today): each cell = team edit-sessions that day (Amna's CRM/reach-out work). Busiest day <b>Jun 8 (12 sessions)</b>. From now on it updates <b>live</b> via ActivityLog whenever the Sheet changes.</div></div>
+  </section>
+
+  <!-- ENGINEERING -->
+  <section class="tabpanel" id="engineering">
+    <div class="card pad"><h2>Commit Activity <span class="tag">real · 4 repos · last 12 months</span></h2><div class="chart sm" id="c-ghcal"></div>
+      <div class="note"><b>195 commits</b> across 70 active days. Spike May 20 = 37 commits. Mobile ships almost daily; AI branches <code>claude/imp-N-*</code> already running.</div></div>
+    <div class="cols even">
+      <div class="card pad"><h2>Commits per Repo <span class="tag">main</span></h2><div class="chart sm" id="c-repos"></div></div>
+      <div class="card pad"><h2>Substrate Status <span class="tag">prerequisites for safe shipping</span></h2>
+        <ul class="pri">
+          <li><span class="chip c-p0">P0</span><span><b>No CI</b> — add GitHub Actions (analyze + test).</span></li>
+          <li><span class="chip c-p0">P0</span><span><b>No Crashlytics</b> — crash-rate unmeasurable.</span></li>
+          <li><span class="chip c-p0">P0</span><span><b>PostHog: 0 events</b> — onboarding funnel unmeasurable.</span></li>
+          <li><span class="chip c-p1">P1</span><span><code>lock_enabled</code> kill-switch + staged rollout.</span></li>
+        </ul>
+        <div class="note">Full PR-ready spec in <code>fiveprayer-dashboard/substrate/MOBILE_SUBSTRATE.md</code>.</div></div>
+    </div>
+    <div class="card pad" style="margin-top:14px"><h2>Reliability — Crash &amp; ANR Rate <span class="tag">Android Vitals · Play Reporting API · live</span></h2><div class="chart sm" id="c-vitals"></div>
+      <div class="note">Crash rate ~<b>0.33%</b> (healthy, under Google's 1.09% threshold). <b style="color:var(--amber)">ANR ~0.52% — above Google's 0.47% threshold</b> ⚠️ — ANRs hurt UX + Play ranking; worth the app team's attention.</div></div>
+  </section>
+
+  <footer id="foot">Live-updating dashboard — reads <code>data.json</code>, refreshed on a schedule from Supabase + GitHub + the App/Play stores. Aggregate numbers only, no personal data.</footer>
+</div>
+
+<script>
+const INK='#1a1d23', MUT='#8a94a3', GRID='#f0f1f3', AXIS='#e7e9ee';
+const TEAL='#14b8a6', TEALd='#0f9488', SLATE='#94a3b8', BLUE='#5b8def', GREEN='#0ea371', RED='#e5484d', AMBER='#e0a312';
+const charts=[];
+function mk(id){var el=document.getElementById(id); if(!el)return null; var c=echarts.init(el,null,{renderer:'canvas'}); charts.push(c); return c;}
+function fmt(n){return n>=1e6?(n/1e6).toFixed(2)+'M':n>=1e3?(n/1e3).toFixed(n>=1e4?0:1)+'K':n;}
+var AX={axisLine:{lineStyle:{color:AXIS}},axisLabel:{color:MUT,fontSize:11},axisTick:{show:false},splitLine:{lineStyle:{color:GRID}}};
+var TT={trigger:'axis',backgroundColor:'#fff',borderColor:'#e7e9ee',borderWidth:1,padding:[8,11],textStyle:{color:INK,fontSize:12},
+  extraCssText:'box-shadow:0 6px 20px rgba(20,30,50,.10);border-radius:9px;',axisPointer:{lineStyle:{color:'#cfd5dd'}}};
+
+function lineArea(id,dates,series){var c=mk(id); if(!c)return;
+  c.setOption({grid:{left:48,right:18,top:18,bottom:26},tooltip:TT,legend:series.length>1?{top:0,right:0,icon:'circle',textStyle:{color:MUT},itemWidth:8,itemHeight:8}:undefined,
+    xAxis:Object.assign({type:'category',data:dates,boundaryGap:false},AX,{axisLabel:{color:MUT,fontSize:10,interval:Math.ceil(dates.length/8)}}),
+    yAxis:Object.assign({type:'value'},AX,{axisLabel:{color:MUT,fontSize:11,formatter:fmt}}),
+    series:series.map(function(s){return {name:s.name,type:'line',stack:s.stack,smooth:true,showSymbol:false,lineStyle:{width:s.stack?0:2,color:s.color},
+      areaStyle:{color:s.color+(s.stack?'33':'14'),opacity:1},itemStyle:{color:s.color},data:s.data,markPoint:s.mark};})});}
+
+function bar(id,cats,vals,colors,horiz){var c=mk(id); if(!c)return;
+  var base={grid:{left:horiz?120:38,right:24,top:14,bottom:26},tooltip:Object.assign({},TT,{trigger:'item'})};
+  var catAx=Object.assign({type:'category',data:cats},AX,{axisLabel:{color:MUT,fontSize:12}});
+  var valAx=Object.assign({type:'value'},AX,{axisLabel:{color:MUT,fontSize:11,formatter:fmt}});
+  base[horiz?'yAxis':'xAxis']=horiz?Object.assign(catAx,{inverse:true}):catAx; base[horiz?'xAxis':'yAxis']=valAx;
+  base.series=[{type:'bar',data:vals.map(function(v,i){return {value:v,itemStyle:{color:colors?colors[i]:TEAL,borderRadius:horiz?[0,5,5,0]:[5,5,0,0]}};}),barWidth:'56%',
+    label:{show:true,position:horiz?'right':'top',color:MUT,fontSize:11,formatter:function(p){return fmt(p.value);}}}];
+  c.setOption(base);}
+
+function donut(id,data){var c=mk(id); if(!c)return;
+  c.setOption({tooltip:Object.assign({},TT,{trigger:'item',formatter:'{b}: {c} ({d}%)'}),legend:{bottom:0,icon:'circle',textStyle:{color:MUT},itemWidth:8,itemHeight:8},
+    series:[{type:'pie',radius:['54%','78%'],center:['50%','45%'],avoidLabelOverlap:true,itemStyle:{borderColor:'#fff',borderWidth:2},label:{show:false},data:data}]});}
+
+function calendar(id,daily){var c=mk(id); if(!c)return; var data=Object.keys(daily).map(function(k){return [k,daily[k]];});
+  var max=data.length?Math.max.apply(null,data.map(function(d){return d[1];})):1;
+  c.setOption({tooltip:Object.assign({},TT,{trigger:'item',formatter:function(p){return p.value[0]+': '+p.value[1]+' commits';}}),
+    visualMap:{min:0,max:max,show:false,inRange:{color:['#eef0f3','#cdeee8','#84d8cc','#35bdab','#0f9488']}},
+    calendar:{top:18,left:30,right:8,bottom:0,cellSize:['auto',13],range:['2025-06-15','2026-06-09'],
+      itemStyle:{color:'#f6f7f9',borderColor:'#fff',borderWidth:2},splitLine:{show:false},
+      yearLabel:{show:false},monthLabel:{color:MUT,fontSize:10},dayLabel:{color:MUT,fontSize:9,firstDay:0}},
+    series:[{type:'heatmap',coordinateSystem:'calendar',data:data}]});}
+
+document.getElementById('tabs').addEventListener('click',function(e){var b=e.target.closest('button'); if(!b)return;
+  document.querySelectorAll('#tabs button').forEach(function(x){x.classList.toggle('active',x===b)});
+  var id=b.getAttribute('data-tab');
+  document.querySelectorAll('.tabpanel').forEach(function(p){p.classList.toggle('active',p.id===id)});
+  window.scrollTo(0,0); setTimeout(function(){charts.forEach(function(c){c.resize();});},50);});
+window.addEventListener('resize',function(){charts.forEach(function(c){c.resize();});});
+
+fetch('data.json?'+Date.now()).then(function(r){return r.json();}).then(function(D){
+  var gen=new Date(D.generatedAt); document.getElementById('updated').textContent='updated '+gen.toLocaleDateString('en-US',{month:'short',day:'numeric'})+' · auto-refresh';
+  document.getElementById('sub').textContent='Live from Supabase + GitHub + the stores · '+D.dau.length+' days tracked';
+  var k=D.kpis;
+  var kpi=[['App opens',k.appOpens.toLocaleString('en-US'),'real accounts ~'+fmt(k.accounts),'up'],
+    ['Activation',k.activationPct+'%','anon 35 · G 62 · A 85',''],
+    ['MAU · 30d',k.mau30.toLocaleString('en-US'),(((k.mau30/k.appOpens)*100).toFixed(1))+'% of opens',''],
+    ['DAU · latest',k.dauLatest.toLocaleString('en-US'),'sustained after the spike','up'],
+    ['App Store',(D.stores?D.stores.ios.rating:k.rating)+'★','iOS · '+(D.stores?D.stores.ios.reviews:'')+' reviews',''],
+    ['Paying users',k.paying,'not wired yet','down']];
+  document.getElementById('kpis').innerHTML=kpi.map(function(x){return '<div class="card kpi"><div class="label">'+x[0]+'</div><div class="val"'+(x[0]=='Paying users'?' style="color:var(--red)"':'')+'>'+x[1]+'</div><div class="delta '+x[3]+'">'+x[2]+'</div></div>';}).join('');
+
+  var dates=D.dau.map(function(r){return r[0];});
+  lineArea('c-dau',dates,[{name:'DAU',color:TEAL,data:D.dau.map(function(r){return r[1];}),
+    mark:{data:[{type:'max',name:'peak',label:{color:'#fff',fontSize:10,fontWeight:700,formatter:function(p){return fmt(p.value);}},itemStyle:{color:TEALd}}],symbolSize:46}}]);
+  lineArea('c-dau2',dates,[{name:'DAU',color:TEAL,data:D.dau.map(function(r){return r[1];})}]);
+  lineArea('c-checkins',dates,[{name:'Check-ins',color:BLUE,data:D.dau.map(function(r){return r[2];})}]);
+  var sd=D.signups.map(function(r){return r[0];});
+  lineArea('c-signups',sd,[
+    {name:'Anonymous',stack:'s',color:SLATE,data:D.signups.map(function(r){return r[1];})},
+    {name:'Google',stack:'s',color:BLUE,data:D.signups.map(function(r){return r[2];})},
+    {name:'Apple',stack:'s',color:TEAL,data:D.signups.map(function(r){return r[3];})}]);
+  bar('c-cohort',D.cohort.map(function(r){return r[0];}),D.cohort.map(function(r){return r[1];}),
+    D.cohort.map(function(r){return r[0]=='May'?AMBER:(r[0][0]=='J'&&r[0].length>3?SLATE:TEAL);}));
+  bar('c-acttype',D.activationByType.map(function(r){return r[0];}),D.activationByType.map(function(r){return r[1];}),[SLATE,BLUE,TEAL]);
+  donut('c-leak',[{name:'Prayed ≥1×',value:k.prayedEver,itemStyle:{color:TEAL}},{name:'Leaked (0 prayers)',value:k.leaked,itemStyle:{color:'#d8dee6'}}]);
+  var oc=function(o,i){return {name:o[0],value:o[1],itemStyle:{color:[TEAL,AMBER,RED,SLATE][i]}};};
+  donut('c-outcomes',D.outcomes.map(oc)); donut('c-outcomes2',D.outcomes.map(oc));
+  bar('c-reviews',D.reviews.map(function(r){return r[0];}),D.reviews.map(function(r){return r[1];}),[TEAL,TEAL,SLATE,RED,RED]);
+  bar('c-funnel',D.funnel.map(function(r){return r[0];}),D.funnel.map(function(r){return r[1];}),null,true);
+  bar('c-reach',D.reachout.map(function(r){return r[0];}),D.reachout.map(function(r){return r[1];}),[BLUE,AMBER,TEAL,TEAL],true);
+  bar('c-repos',D.github.perRepo.map(function(r){return r[0];}),D.github.perRepo.map(function(r){return r[1];}),null,true);
+  calendar('c-ghcal',D.github.daily);
+  var reach=(D.reachoutHistory&&D.reachoutHistory.byDay)?Object.assign({},D.reachoutHistory.byDay):{};
+  calendar('c-reachhm',reach);
+  if(D.activityLogUrl){fetch(D.activityLogUrl).then(function(r){return r.json();}).then(function(j){
+    var merged=Object.assign({},reach),lb=j.byDay||{}; for(var kk in lb)merged[kk]=Math.max(merged[kk]||0,lb[kk]);
+    calendar('c-reachhm',merged); charts.forEach(function(c){c.resize();});
+  }).catch(function(){});}
+
+  if(D.stores){var S=D.stores;
+    var esc=function(s){return String(s||'').replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c];});};
+    var st=function(n){var f=Math.round(n||0);return '★★★★★'.slice(0,f)+'☆☆☆☆☆'.slice(0,5-f);};
+    var dl=function(o){return [o['1']||0,o['2']||0,o['3']||0,o['4']||0,o['5']||0];};
+    document.getElementById('ios-hero').innerHTML='<span class="big">'+S.ios.rating+'</span><span class="stars">'+st(S.ios.rating)+'</span><span class="meta">'+S.ios.reviews+' recent reviews</span>';
+    document.getElementById('play-hero').innerHTML='<span class="big">'+S.play.ratingAllTime+'</span><span class="stars">'+st(S.play.ratingAllTime)+'</span><span class="meta">~'+fmt(S.play.reviewsAllTime)+' reviews · '+S.play.ratingLast7d+'★ last 7d</span>';
+    bar('c-iosdist',['1★','2★','3★','4★','5★'],dl(S.ios.dist),[RED,RED,SLATE,TEAL,TEAL]);
+    bar('c-playdist',['1★','2★','3★','4★','5★'],dl(S.play.distLast7d),[RED,RED,SLATE,TEAL,TEAL]);
+    var rv=function(arr,ios){return (arr||[]).map(function(r){var sub=ios?(r.territory||''):(r.device||r.author||'');var t=ios?(r.title||''):'';var body=ios?(r.body||''):(r.text||'');
+      return '<div class="rev"><div class="top"><span class="stars">'+st(r.rating)+'</span><span>'+esc(sub)+'</span></div>'+(t?'<div class="txt"><b>'+esc(t)+'</b></div>':'')+(body?'<div class="txt">'+esc(body)+'</div>':'')+'</div>';}).join('');};
+    document.getElementById('ios-reviews').innerHTML=rv(S.ios.recent,true);
+    document.getElementById('play-reviews').innerHTML=rv(S.play.recent,false);
+  }
+  if(D.retention&&D.retention.length){var cw=D.retention.map(function(r){return r.cohortWeek.slice(5);});
+    lineArea('c-retention',cw,[{name:'D1',color:TEAL,data:D.retention.map(function(r){return r.d1;})},{name:'D7',color:BLUE,data:D.retention.map(function(r){return r.d7;})},{name:'D30',color:SLATE,data:D.retention.map(function(r){return r.d30;})}]);}
+  if(D.stickiness&&D.stickiness.series){lineArea('c-stickiness',D.stickiness.series.map(function(r){return r[0].slice(5);}),[{name:'DAU/MAU',color:TEAL,data:D.stickiness.series.map(function(r){return r[1];})}]);}
+  if(D.geo&&D.geo.countries_pct){var gg=D.geo.countries_pct.slice(0,12);bar('c-geo',gg.map(function(r){return r[0];}),gg.map(function(r){return r[1];}),null,true);}
+  if(D.engagement&&D.engagement.byPrayer){var bp=D.engagement.byPrayer;bar('c-prayer',bp.map(function(r){return r[0];}),bp.map(function(r){return r[2];}),bp.map(function(r){return r[0]=='fajr'?AMBER:TEAL;}));}
+  if(D.streaks&&D.streaks.buckets){bar('c-streaks',D.streaks.buckets.map(function(b){return b.label;}),D.streaks.buckets.map(function(b){return b.users;}),D.streaks.buckets.map(function(b){return b.label=='0'?SLATE:TEAL;}));}
+  if(D.vitals&&D.vitals.crash){var vd=D.vitals.crash.map(function(r){return r[0].slice(5);});
+    lineArea('c-vitals',vd,[{name:'Crash %',color:TEAL,data:D.vitals.crash.map(function(r){return +(r[1]*100).toFixed(3);})},{name:'ANR %',color:AMBER,data:(D.vitals.anr||[]).map(function(r){return +(r[1]*100).toFixed(3);})}]);}
+  setTimeout(function(){charts.forEach(function(c){c.resize();});},80);
+}).catch(function(e){document.getElementById('sub').textContent='Failed to load data.json — '+e;});
+</script>
+</body>
+</html>
